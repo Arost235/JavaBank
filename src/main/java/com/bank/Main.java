@@ -4,6 +4,7 @@ import com.bank.model.Account;
 import com.bank.model.User;
 import com.bank.repository.InMemoryDatabase;
 import com.bank.service.BankService;
+import com.bank.model.Credit;
 
 import java.math.BigDecimal;
 import java.util.Scanner;
@@ -25,6 +26,7 @@ public class Main
 
         InMemoryDatabase.users.add(user);
         InMemoryDatabase.accounts.add(account);
+        Credit credit = new Credit(new BigDecimal("1000000"), new BigDecimal("50000"), 24);
 
         while (true)
         {
@@ -37,6 +39,7 @@ public class Main
             System.out.println("6. Симуляция прогона месяцев (начисление процентов)");
             System.out.println("7. Досрочное закрытие депозита (проценты сгорят)");
             System.out.println("8. История транзакций");
+            System.out.println("9. Симуляция погашения кредита");
             System.out.println("0. Выход");
             System.out.print("Выберите пункт: ");
 
@@ -93,6 +96,9 @@ public class Main
                     {
                         InMemoryDatabase.transactions.forEach(System.out::println);
                     }
+                    break;
+                case 9:
+                    service.simulateCreditRepayment(account, credit);
                     break;
                 case 0:
                     System.out.println("Выход из программы...");

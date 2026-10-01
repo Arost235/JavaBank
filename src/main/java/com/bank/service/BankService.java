@@ -3,6 +3,7 @@ package com.bank.service;
 import com.bank.model.Account;
 import com.bank.model.Transaction;
 import com.bank.repository.InMemoryDatabase;
+import com.bank.model.Credit;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -125,5 +126,70 @@ public class BankService
         String txId = UUID.randomUUID().toString().substring(0, 6);
         Transaction tx = new Transaction(txId, amount, description);
         InMemoryDatabase.transactions.add(tx);
+    }
+
+    /**
+     * Симуляция погашения кредита по месяцам (на 24 месяца).
+     * Если средств не хватает на очередной платеж, счет блокируется,
+     * а все остатки на депозитах обнуляются в счет уплаты.
+     */
+    public void simulateCreditRepayment(Account account, Credit credit)
+    {
+        if (credit.isBlocked())
+        {
+            System.out.println("Ошибка: Счет заблокирован из-за прошлой просрочки кредита!");
+            return;
+        }
+
+        System.out.println("\n--- ЗАПУСК СИМУЛЯЦИИ ПОГАШЕНИЯ КРЕДИТА ---");
+        System.out.println("Макс. лимит: " + credit.getTotalAmount() + " | Ставка: 30% | Срок: " + credit.getTermMonths() + " мес.");
+        System.out.println("Ежемесячный платеж: " + credit.getMonthlyPayment() + " тенге");
+
+        for (int month = 1; month <= credit.getTermMonths(); month++)
+        {
+            // Суммируем основные балансы обоих депозитов (или можно добавить и accruedInterest, если нужно)
+            BigDecimal totalAvailable = account.getBalance1().add(account.getBalance2());
+
+            System.out.println("\nМесяц " + month + ": Доступно средств = " + totalAvailable);
+
+            // Проверяем, хватает ли средств на ежемесячный платеж
+            if (totalAvailable.compareTo(credit.getMonthlyPayment()) >= 0)
+            {
+                // Списываем сначала с Депозита 1, остаток — с Депозита 2
+                BigDecimal paymentNeeded = credit.getMonthlyPayment();
+
+                if (account.getBalance1().compareTo(paymentNeeded) >= 0)
+                {
+                    account.setBalance1(account.getBalance1().subtract(paymentNeeded));
+                }
+                else
+                {
+                    paymentNeeded = paymentNeeded.subtract(account.getBalance1());
+                    account.setBalance1(BigDecimal.ZERO);
+                    account.setBalance2(account.getBalance2().subtract(paymentNeeded));
+                }
+                saveTransaction(credit.getMonthlyPayment(), "Погашение кредита за месяц " + month);
+                System.out.println("-> Платеж за месяц " + month + " успешно списан.");
+            }
+            else
+            {
+                // Денег не хватило — включаем жесткий режим по ТЗ
+                credit.setBlocked(true);
+                account.setBalance1(BigDecimal.ZERO);
+                account.setBalance2(BigDecimal.ZERO);
+                account.setAccruedInterest1(BigDecimal.ZERO);
+                account.setAccruedInterest2(BigDecimal.ZERO);
+
+                saveTransaction(BigDecimal.ZERO, "Блокировка счета и обнуление депозитов за просрочку");
+                System.out.println("ОШИБКА: Недостаточно средств для платежа в месяце " + month + "!");
+                System.out.println("СЧЕТ ЗАБЛОКИРОВАН! Все депозиты полностью обнулены в счет уплаты кредита.");
+                break;
+            }
+        }
+
+        if (!credit.isBlocked())
+        {
+            System.out.println("\n🎉 Поздравляем! Кредит успешно полностью погашен за " + credit.getTermMonths() + " месяцев!");
+        }
     }
 }
