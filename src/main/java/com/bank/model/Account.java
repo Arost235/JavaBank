@@ -10,11 +10,11 @@ public class Account
     // Депозит 1 (пополнение и снятие)
     private String deposit1Number;
     private BigDecimal balance1;
-    private double rate1;             // Процентная ставка (например, 17.5, 22.3)
-    private int term1Months;          // Срок в месяцах (3, 6, 9, 12)
-    private LocalDate startDate1;     // Дата открытия
-    private LocalDate endDate1;       // Дата окончания (авторасчет)
-    private BigDecimal accruedInterest1; // Накопленное вознаграждение (для симуляции)
+    private double rate1;
+    private int term1Months;
+    private LocalDate startDate1;
+    private LocalDate endDate1;
+    private BigDecimal accruedInterest1;
 
     // Депозит 2 (только пополнение)
     private String deposit2Number;
@@ -24,6 +24,11 @@ public class Account
     private LocalDate startDate2;
     private LocalDate endDate2;
     private BigDecimal accruedInterest2;
+
+    // Кредит
+    private Credit credit;                          // текущий кредит (может быть null)
+    private BigDecimal creditAccountBalance;        // отдельный кредитный счёт
+    private boolean blocked;                        // блокировка счёта
 
     public Account(String accountId, String deposit1Number, String deposit2Number,
                    BigDecimal balance1, BigDecimal balance2,
@@ -46,6 +51,10 @@ public class Account
         this.startDate2 = LocalDate.now();
         this.endDate2 = this.startDate2.plusMonths(term2Months);
         this.accruedInterest2 = BigDecimal.ZERO;
+
+        this.credit = null;
+        this.creditAccountBalance = BigDecimal.ZERO;
+        this.blocked = false;
     }
 
     // Геттеры и сеттеры
@@ -70,4 +79,13 @@ public class Account
     public LocalDate getEndDate2() { return endDate2; }
     public BigDecimal getAccruedInterest2() { return accruedInterest2; }
     public void setAccruedInterest2(BigDecimal accruedInterest2) { this.accruedInterest2 = accruedInterest2; }
+
+    public Credit getCredit() { return credit; }
+    public void setCredit(Credit credit) { this.credit = credit; }
+
+    public BigDecimal getCreditAccountBalance() { return creditAccountBalance; }
+    public void setCreditAccountBalance(BigDecimal creditAccountBalance) { this.creditAccountBalance = creditAccountBalance; }
+
+    public boolean isBlocked() { return blocked; }
+    public void setBlocked(boolean blocked) { this.blocked = blocked; }
 }
